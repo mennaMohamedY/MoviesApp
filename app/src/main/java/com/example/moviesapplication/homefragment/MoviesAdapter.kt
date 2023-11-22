@@ -7,12 +7,17 @@ import androidx.recyclerview.widget.RecyclerView.Adapter
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.bumptech.glide.Glide
 import com.example.moviesapplication.R
+import com.example.moviesapplication.browsefragment.GenreListProvider
 import com.example.moviesapplication.databinding.SinglervmovieDesignBinding
 import com.example.moviesapplication.module.ResultsItem
+import com.example.moviesapplication.watchlist.WatchListProvider
 
 class MoviesAdapter(var MoviesData:List<ResultsItem?>?) :Adapter<MoviesAdapter.MyMoviesHolder>(){
     var onMovieClickListener:OnMovieClickListener?=null
     var onAddMovieClickListener:OnAddMovieClickListener?=null
+    var count:Int?=0
+    var onRemoveMovieClickListener:OnRemoveMovieClickListener?=null
+    var showToast:ShowToast?=null
 
     fun updateData(moviesDAta: List<ResultsItem?>?){
         MoviesData=moviesDAta
@@ -38,17 +43,71 @@ class MoviesAdapter(var MoviesData:List<ResultsItem?>?) :Adapter<MoviesAdapter.M
         holder.itemBinding.movieImg.setOnClickListener({
             onMovieClickListener?.OnMovieClicked(currentItem!!,position)
         })
-
-        holder.itemBinding.addMovieBookmark.setOnClickListener({
-
+        if(checkifInWatchList(currentItem!!)){
             with(holder){
                 with(itemBinding){
                     addMovieBookmark.visibility=View.INVISIBLE
                     movieAddedBookmark.visibility=View.VISIBLE
                 }
             }
-            onAddMovieClickListener?.OnAddMovieClick(currentItem!!,position)
+        }else{
+            with(holder){
+                with(itemBinding){
+                    addMovieBookmark.visibility=View.VISIBLE
+                    movieAddedBookmark.visibility=View.INVISIBLE
+                }
+            }
+        }
+
+        holder.itemBinding.addMovieBookmark.setOnClickListener({
+            count =count!!+1
+
+            //in case i want to save movie in watch list then i'm saving it for the first time so the fun checkifinwatchlist will return false
+            if (!checkifInWatchList(currentItem!!)){
+                onAddMovieClickListener?.OnAddMovieClick(currentItem!!,position)
+                with(holder){
+                    with(itemBinding){
+                        addMovieBookmark.visibility=View.INVISIBLE
+                        movieAddedBookmark.visibility=View.VISIBLE
+                    }
+                }
+            }else{
+                showToast?.showToast()
+            }
         })
+        holder.itemBinding.movieAddedBookmark.setOnClickListener({
+            onRemoveMovieClickListener?.OnRemoveClickL(currentItem,position)
+
+            if (checkifInWatchList(currentItem)){
+                with(holder){
+                    with(itemBinding){
+//                        addMovieBookmark.visibility=View.VISIBLE
+//                        movieAddedBookmark.visibility=View.INVISIBLE
+//                        count =count!!+1
+                    }
+                }
+            }
+        })
+    }
+    interface ShowToast{
+        fun showToast()
+    }
+
+    fun checkifInWatchList(currentItem:ResultsItem):Boolean{
+        var valid=false
+        if (WatchListProvider.watchlist.isNullOrEmpty()){
+            return valid
+        }else{
+            for (i in 0..WatchListProvider.watchlist?.size!!-1){
+                if (currentItem.id == WatchListProvider.watchlist!![i].id){
+                    valid = true
+                }
+            }
+        }
+        return valid
+    }
+    interface OnRemoveMovieClickListener{
+        fun OnRemoveClickL(movie: ResultsItem,position: Int)
     }
 
     interface OnAddMovieClickListener{

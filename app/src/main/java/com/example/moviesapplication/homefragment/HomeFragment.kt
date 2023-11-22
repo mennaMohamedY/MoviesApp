@@ -15,20 +15,27 @@ import android.widget.Toast
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.get
 import com.bumptech.glide.Glide
 import com.example.moviesapplication.Constants
 import com.example.moviesapplication.R
 import com.example.moviesapplication.apimanager.ApiManager
 import com.example.moviesapplication.apimanager.ChosenMovie
+import com.example.moviesapplication.browsefragment.GenreListProvider
 import com.example.moviesapplication.databinding.FragmentHomeBinding
 import com.example.moviesapplication.module.ResultsItem
 import com.example.moviesapplication.module.TMDBResponse
 import com.example.moviesapplication.moviedetails.MovieDetailsActivity
 import com.example.moviesapplication.roomdb.RoomClass
 import com.example.moviesapplication.roomdb.WatchList
+import com.example.moviesapplication.watchlist.WatchListAdapter
+import com.example.moviesapplication.watchlist.WatchListProvider
+import com.example.moviesapplication.watchlist.WatchListViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import okhttp3.internal.wait
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -43,6 +50,8 @@ class HomeFragment : Fragment() {
     var scdmoviesAdapter=MoviesAdapter(listOf())
     var currentChosenMovie:ResultsItem?=null
     lateinit var chosenMovieByDefault:ChosenMovie
+    lateinit var WatchListVM:WatchListViewModel
+
 
 
 
@@ -50,6 +59,7 @@ class HomeFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         homefragmentViewModel=ViewModelProvider(this).get(HomeFragmentViewModel::class.java)
+        WatchListVM=ViewModelProvider(this).get(WatchListViewModel::class.java)
 
     }
 
@@ -138,15 +148,89 @@ class HomeFragment : Fragment() {
 
 
         })
-        moviesAdapter.onAddMovieClickListener=object :MoviesAdapter.OnAddMovieClickListener{
-            override fun OnAddMovieClick(movie: ResultsItem, position: Int) {
-                val mo= CreateMovieWatchListDataClass(movie)
-                //RoomClass.getInstance(requireContext()).MovieDAO().addToFavourits(mo)
-                Toast.makeText(requireContext(),"movieAdded To Room DB",Toast.LENGTH_LONG).show()
+        moviesAdapter.showToast=object :MoviesAdapter.ShowToast{
+            override fun showToast() {
+                Toast.makeText(requireContext(),"Movie is already added to the watchlist",Toast.LENGTH_LONG).show()
+            }
+        }
+        scdmoviesAdapter.showToast=object :MoviesAdapter.ShowToast{
+            override fun showToast() {
+                Toast.makeText(requireContext(),"Movie is already added to the watchlist",Toast.LENGTH_LONG).show()
             }
         }
 
+        moviesAdapter.onAddMovieClickListener=object :MoviesAdapter.OnAddMovieClickListener{
+            override fun OnAddMovieClick(movie: ResultsItem, position: Int) {
+                CreateMovieWatchListDataClass(movie)
+                //RoomClass.getInstance(requireContext()).MovieDAO().addToFavourits(mo)
+            }
+        }
+        scdmoviesAdapter.onAddMovieClickListener=object :MoviesAdapter.OnAddMovieClickListener{
+            override fun OnAddMovieClick(movie: ResultsItem, position: Int) {
+                CreateMovieWatchListDataClass(movie)
+                //RoomClass.getInstance(requireContext()).MovieDAO().addToFavourits(mo)
+            }
+        }
         //android.resource://${activity?.packageName}/${R.raw.video}
+        moviesAdapter.onRemoveMovieClickListener=object :MoviesAdapter.OnRemoveMovieClickListener{
+            override fun OnRemoveClickL(movie: ResultsItem, position: Int) {
+               // RemoveFromDB(movie)
+                Toast.makeText(requireContext(),"Movie already Added To WatchList",Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+
+    fun RemoveFromDB(movie: ResultsItem){
+        val moviee=WatchList(
+            overview = movie.overview,
+            originalTitle = movie.originalTitle,
+            title = movie.title,
+            posterPath = movie.posterPath,
+            releaseDate = movie.releaseDate,
+            id = movie.id,
+            adult = movie.adult,
+            voteCount = movie.voteCount
+        )
+
+//        val watchlist= GlobalScope.async {
+//            RoomClass.getInstance(requireContext()).MovieDAO().deleteItemFromFav(moviee)
+//            Log.d("1","deleted")
+//        }
+//        val updatedlist=GlobalScope.async {
+//             val n=watchlist.await()
+//            if(n == watchlist.await()){
+//                RoomClass.getInstance(requireContext()).MovieDAO().showAllFromFavourits()
+//            }
+//        }
+//       val d= GlobalScope.launch {  if (updatedlist.isCompleted ){
+//            WatchListProvider.watchlist=RoomClass.getInstance(requireContext()).MovieDAO().showAllFromFavourits()
+//        } }
+//
+//        if(d.isCompleted){WatchListVM.movieslivedata.value=WatchListProvider.watchlist}
+//
+//        Toast.makeText(requireContext(),"Movie with name ${moviee.title} is removed from favourits",Toast.LENGTH_LONG).show()
+
+    }
+
+
+    fun checkIfMovieAlreadyExcist(movie: ResultsItem):Boolean {
+        GlobalScope.launch(Dispatchers.IO) {
+            val favMovies =
+                RoomClass.getInstance(requireContext()).MovieDAO().showAllFromFavourits()
+            GenreListProvider.FavMovies=favMovies
+            for (i in 0..favMovies.size - 1) {
+                if (movie.id == favMovies[i].id) {
+                    GenreListProvider.MovieExcistsInFavs = 1
+                }
+            }
+        }
+        if (GenreListProvider.MovieExcistsInFavs==1){
+            return true
+        }else{
+            return false
+        }
+
     }
     fun CreateMovieWatchListDataClass(movie:ResultsItem):WatchList{
         val moviee=WatchList(
@@ -162,6 +246,12 @@ class HomeFragment : Fragment() {
         GlobalScope.launch(Dispatchers.IO) {
             RoomClass.getInstance(requireContext()).MovieDAO().addToFavourits(moviee)
         }
+        GlobalScope.launch(Dispatchers.IO) {
+            WatchListProvider.watchlist=RoomClass.getInstance(requireContext()).MovieDAO().showAllFromFavourits()
+        }
+        //WatchListVM.movieslivedata.value=WatchListProvider.watchlist
+        WatchListVM.getWatchListMoviesFromDB(requireContext())
+
         return moviee
     }
     fun getMovies(){

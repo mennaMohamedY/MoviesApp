@@ -10,6 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.example.moviesapplication.Constants
 import com.example.moviesapplication.R
 import com.example.moviesapplication.apimanager.ApiManager
@@ -104,31 +105,55 @@ class SearchFragment : Fragment() {
         }else{
             numm = pageNum
         }
-        ApiManager.getServices().getPopularMovies(Constants.apiKey,numm)
-            .enqueue(object :Callback<TMDBResponse>{
-                override fun onResponse(
-                    call: Call<TMDBResponse>,
-                    response: Response<TMDBResponse>
-                ) {
-                    searchAdapter.updateData(response.body()?.results as MutableList<ResultsItem?>?)
-                    searchBinding.moviesGenreRv.adapter=searchAdapter
-                    val num=response.body()?.totalPages
-                    PagesNumProvider.pagesNum=num
-                    pagesadapter.updateNum(PagesNumProvider.pagesNum)
-                    searchBinding.pagesRV.adapter=pagesadapter
-                    PagesNumProvider.moviesList=response.body()?.results
+        lifecycleScope.launchWhenCreated {
+            try {
+                val response=ApiManager.getServices().getPopularMovies(Constants.apiKey,numm)
+                searchAdapter.updateData(response.results as MutableList<ResultsItem?>?)
+               // searchAdapter.updateData(response.body()?.results as MutableList<ResultsItem?>?)
+                searchBinding.moviesGenreRv.adapter=searchAdapter
+                val num=response.totalPages
+                //val num=response.body()?.totalPages
+                PagesNumProvider.pagesNum=num
+                pagesadapter.updateNum(PagesNumProvider.pagesNum)
+                searchBinding.pagesRV.adapter=pagesadapter
+                PagesNumProvider.moviesList=response.results
+                //PagesNumProvider.moviesList=response.body()?.results
 
-                }
+            }catch (e:Exception){
+                val progressDialog: ProgressDialog
+                progressDialog= ProgressDialog(requireContext())
+                progressDialog.setMessage("failed ${e.localizedMessage}")
+                Log.e("Failure","Failed ${e.localizedMessage}")
+                progressDialog.show()
 
-                override fun onFailure(call: Call<TMDBResponse>, t: Throwable) {
-                    val progressDialog: ProgressDialog
-                    progressDialog= ProgressDialog(requireContext())
-                    progressDialog.setMessage("failed ${t.localizedMessage}")
-                    Log.e("Failure","Failed ${t.localizedMessage}")
-                    progressDialog.show()
-                }
+            }
+        }
 
-            })
+//        ApiManager.getServices().getPopularMovies(Constants.apiKey,numm)
+//            .enqueue(object :Callback<TMDBResponse>{
+//                override fun onResponse(
+//                    call: Call<TMDBResponse>,
+//                    response: Response<TMDBResponse>
+//                ) {
+//                    searchAdapter.updateData(response.body()?.results as MutableList<ResultsItem?>?)
+//                    searchBinding.moviesGenreRv.adapter=searchAdapter
+//                    val num=response.body()?.totalPages
+//                    PagesNumProvider.pagesNum=num
+//                    pagesadapter.updateNum(PagesNumProvider.pagesNum)
+//                    searchBinding.pagesRV.adapter=pagesadapter
+//                    PagesNumProvider.moviesList=response.body()?.results
+//
+//                }
+//
+//                override fun onFailure(call: Call<TMDBResponse>, t: Throwable) {
+//                    val progressDialog: ProgressDialog
+//                    progressDialog= ProgressDialog(requireContext())
+//                    progressDialog.setMessage("failed ${t.localizedMessage}")
+//                    Log.e("Failure","Failed ${t.localizedMessage}")
+//                    progressDialog.show()
+//                }
+//
+//            })
 
     }
 

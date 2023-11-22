@@ -34,8 +34,8 @@
         android:layout_marginLeft="-5dp"
         android:src="@drawable/ic_baseline_bookmark_add_24"/>
     <ImageView
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="30dp"
+        android:layout_height="35dp"
         android:visibility="invisible"
         android:id="@+id/movie_added_bookmark"
         app:layout_constraintStart_toStartOf="parent"

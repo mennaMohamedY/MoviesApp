@@ -29,6 +29,7 @@ class WatchListFragment : Fragment() {
 
 
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WatchListVM=ViewModelProvider(this).get(WatchListViewModel::class.java)
@@ -42,12 +43,27 @@ class WatchListFragment : Fragment() {
         //return inflater.inflate(R.layout.fragment_watch_list, container, false)
         WatchlistBinding=DataBindingUtil.inflate(inflater,R.layout.fragment_watch_list,container,false)
         return WatchlistBinding.root
+        WatchlistBinding.moviesGenreRv.adapter=watchlistadapter
+
+
+
 
     }
+//    fun SubScribeToLiveData(){
+//        WatchListVM.movieslivedata.observe(viewLifecycleOwner){
+//            watchlistadapter.updateList(it)
+//        }
+//       // WatchListVM.movieslivedata.value=WatchListProvider.watchlist
+//    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        updateMovieslist()
+        //WatchlistBinding.empty.visibility=View.INVISIBLE
+        WatchlistBinding.moviesGenreRv.adapter=watchlistadapter
+        WatchListVM.getWatchListMoviesFromDB(requireContext())
+        SubScribeToLiveData()
+        //WatchlistBinding.moviesGenreRv.adapter=watchlistadapter
+        //updateMovieslist()
         WatchlistBinding.search.setOnQueryTextListener(object:androidx.appcompat.widget.SearchView.OnQueryTextListener{
             override fun onQueryTextSubmit(query: String?): Boolean {
                 //implement later
@@ -69,14 +85,49 @@ class WatchListFragment : Fragment() {
             override fun OnDeleteClick(poster: WatchList, postion: Int) {
                 DeleteFromWatchList(poster)
             }
+        }
+    }
+//
+    override fun onStart() {
+        super.onStart()
+        SubScribeToLiveData()
+    }
 
+    override fun onResume() {
+        super.onResume()
+       SubScribeToLiveData()
+    }
+    fun SubScribeToLiveData(){
+        //WatchListVM.getWatchListMoviesFromDB(requireContext())
+        WatchListVM.movieslivedata.observe(viewLifecycleOwner){
+           // watchlistadapter.updateList(null)
+            //watchlistadapter.updateList(it)
+            if (it.isNullOrEmpty()){
+                WatchlistBinding.empty.visibility=View.VISIBLE
+                watchlistadapter.updateList(it)
+                WatchlistBinding.moviesGenreRv.adapter=watchlistadapter
+
+            }
+            else{
+                WatchlistBinding.empty.visibility=View.INVISIBLE
+                watchlistadapter.updateList(it)
+                WatchlistBinding.moviesGenreRv.adapter=watchlistadapter
+
+            }
+            //watchlistadapter.notifyDataSetChanged()
+            //watchlistadapter.updateList(WatchListProvider.watchlist)
+            //WatchlistBinding.moviesGenreRv.adapter=watchlistadapter
+            //watchlistadapter.notifyDataSetChanged()
         }
     }
     fun DeleteFromWatchList(poster:WatchList){
         GlobalScope.launch(Dispatchers.IO) {
              RoomClass.getInstance(requireContext()).MovieDAO().deleteItemFromFav(poster)
         }
-        updateMovieslist()
+        WatchListVM.getWatchListMoviesFromDB(requireContext())
+
+        //updateMovieslist()
+        SubScribeToLiveData()
     }
 
     fun filterList(Query:String){
@@ -103,9 +154,9 @@ class WatchListFragment : Fragment() {
              WatchListProvider.watchlist = RoomClass.getInstance(requireContext()).MovieDAO().showAllFromFavourits()
         }
 
-        watchlistadapter.updateList(WatchListProvider.watchlist)
-        WatchlistBinding.moviesGenreRv.adapter=watchlistadapter
-        WatchlistBinding.empty.visibility=View.INVISIBLE
+//        watchlistadapter.updateList(WatchListProvider.watchlist)
+//        WatchlistBinding.moviesGenreRv.adapter=watchlistadapter
+//        WatchlistBinding.empty.visibility=View.INVISIBLE
 
 
     }

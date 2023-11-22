@@ -17,7 +17,12 @@ class WatchListAdapter (var watchlistDAta:List<WatchList?>?):Adapter<WatchListAd
         notifyDataSetChanged()
     }
 
-    class MyWatchListHolder(val watchListBinding:SinglewatchlistDesignBinding):ViewHolder(watchListBinding.root)
+    class MyWatchListHolder(val watchListBinding:SinglewatchlistDesignBinding):ViewHolder(watchListBinding.root){
+        fun bind(watchlistElement:WatchList){
+            watchListBinding.watchList=watchlistElement
+            watchListBinding.invalidateAll()
+        }
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyWatchListHolder {
         val WatchListBinding=SinglewatchlistDesignBinding.inflate(LayoutInflater.from(parent.context),parent,false)
@@ -26,15 +31,17 @@ class WatchListAdapter (var watchlistDAta:List<WatchList?>?):Adapter<WatchListAd
 
     override fun onBindViewHolder(holder: MyWatchListHolder, position: Int) {
         val currentItem=watchlistDAta?.get(position)
+        holder.bind(currentItem!!)
+
 
         Glide.with(holder.itemView).load("https://image.tmdb.org/t/p/original/" + currentItem?.posterPath).into(holder.watchListBinding.movieImg)
-        with(holder){
-            with(watchListBinding){
-                name.text=currentItem?.title
-                year.text=currentItem?.releaseDate
-                movieDescription.text=currentItem?.overview
-            }
-        }
+//        with(holder){
+//            with(watchListBinding){
+//                name.text=currentItem?.title
+//                year.text=currentItem?.releaseDate
+//                movieDescription.text=currentItem?.overview
+//            }
+//        }
         holder.watchListBinding.movieImg.setOnClickListener({
             onPosterClickListener?.OnPosterClick(currentItem!!,position)
         })

@@ -26,11 +26,11 @@ interface WebServices {
     fun getSimilarMovies(@Path("movie_id") movie_id:Int, @Query("api_key") apiKeyAuthentication: String):Call<TMDBResponse>
 
     @GET("genre/movie/list")
-    fun getMoviesGenre(@Query("api_key") apiKeyAuthentication: String):Call<MoviesCategoriesResponse>
+    suspend fun getMoviesGenre(@Query("api_key") apiKeyAuthentication: String):MoviesCategoriesResponse
 
     @GET("discover/movie")
-    fun getMoviesByGenreID(@Query("api_key") apiKeyAuthentication: String, @Query("with_genres") genreId:Int):Call<TMDBResponse>
+    suspend fun getMoviesByGenreID(@Query("api_key") apiKeyAuthentication: String, @Query("with_genres") genreId:Int):TMDBResponse
 
     @GET("movie/popular")
-    fun getPopularMovies(@Query("api_key") apiKeyAuthentication: String,@Query("page") pageNum:Int):Call<TMDBResponse>
+    suspend fun getPopularMovies(@Query("api_key") apiKeyAuthentication: String,@Query("page") pageNum:Int):TMDBResponse
 }

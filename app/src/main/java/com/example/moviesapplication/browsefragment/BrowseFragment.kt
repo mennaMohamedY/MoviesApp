@@ -14,6 +14,7 @@ import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.get
+import androidx.lifecycle.lifecycleScope
 import com.example.moviesapplication.Constants
 import com.example.moviesapplication.R
 import com.example.moviesapplication.apimanager.ApiManager
@@ -94,27 +95,42 @@ class BrowseFragment : Fragment() {
 //    }
 
     fun getMoviesByID(genre:MovieGenresItem){
-        ApiManager.getServices().getMoviesByGenreID(Constants.apiKey, genre.id!!)
-            .enqueue(object :Callback<TMDBResponse>{
-                override fun onResponse(
-                    call: Call<TMDBResponse>,
-                    response: Response<TMDBResponse>
-                ) {
-                    scdBrowseAdapter.updateData(response.body()?.results)
-                    BrowseBinding.moviesGenreRv.adapter=scdBrowseAdapter
-                    GenreListProvider.whichAdapter=2
-                    GenreListProvider.SelectedGenreMovies=response.body()?.results
-                }
-
-                override fun onFailure(call: Call<TMDBResponse>, t: Throwable) {
-                    val progressDialog: ProgressDialog
-                    progressDialog= ProgressDialog(requireContext())
-                    progressDialog.setMessage("failed ${t.localizedMessage}")
-                    Log.e("Failure","Failed ${t.localizedMessage}")
-                    progressDialog.show()
-                }
-
-            })
+        lifecycleScope.launchWhenCreated {
+            try {
+                val response= ApiManager.getServices().getMoviesByGenreID(Constants.apiKey, genre.id!!)
+                scdBrowseAdapter.updateData(response.results)
+                BrowseBinding.moviesGenreRv.adapter=scdBrowseAdapter
+                GenreListProvider.whichAdapter=2
+                GenreListProvider.SelectedGenreMovies=response.results
+            }catch (e:Exception){
+                val progressDialog: ProgressDialog
+                progressDialog= ProgressDialog(requireContext())
+                progressDialog.setMessage("failed ${e.localizedMessage}")
+                Log.e("Failure","Failed ${e.localizedMessage}")
+                progressDialog.show()
+            }
+        }
+//        ApiManager.getServices().getMoviesByGenreID(Constants.apiKey, genre.id!!)
+//            .enqueue(object :Callback<TMDBResponse>{
+//                override fun onResponse(
+//                    call: Call<TMDBResponse>,
+//                    response: Response<TMDBResponse>
+//                ) {
+//                    scdBrowseAdapter.updateData(response.body()?.results)
+//                    BrowseBinding.moviesGenreRv.adapter=scdBrowseAdapter
+//                    GenreListProvider.whichAdapter=2
+//                    GenreListProvider.SelectedGenreMovies=response.body()?.results
+//                }
+//
+//                override fun onFailure(call: Call<TMDBResponse>, t: Throwable) {
+//                    val progressDialog: ProgressDialog
+//                    progressDialog= ProgressDialog(requireContext())
+//                    progressDialog.setMessage("failed ${t.localizedMessage}")
+//                    Log.e("Failure","Failed ${t.localizedMessage}")
+//                    progressDialog.show()
+//                }
+//
+//            })
 
     }
 
@@ -163,27 +179,42 @@ class BrowseFragment : Fragment() {
 
 
     fun getMoviesGenre(){
-        ApiManager.getServices().getMoviesGenre(Constants.apiKey)
-            .enqueue(object :Callback<MoviesCategoriesResponse>{
-                override fun onResponse(
-                    call: Call<MoviesCategoriesResponse>,
-                    response: Response<MoviesCategoriesResponse>
-                ) {
-                    BrowseAdapter.UpdateList(response.body()?.genres as MutableList<MovieGenresItem?>?)
-                    GenreListProvider.GenreList=response.body()?.genres
-                    BrowseBinding.moviesGenreRv.adapter=BrowseAdapter
-                    GenreListProvider.whichAdapter=1
-                }
-
-                override fun onFailure(call: Call<MoviesCategoriesResponse>, t: Throwable) {
-                    val progressDialog: ProgressDialog
-                    progressDialog= ProgressDialog(requireContext())
-                    progressDialog.setMessage("failed ${t.localizedMessage}")
-                    Log.e("Failure","Failed ${t.localizedMessage}")
-                    progressDialog.show()
-                }
-
-            })
+        lifecycleScope.launchWhenCreated {
+            try {
+                val response=ApiManager.getServices().getMoviesGenre(Constants.apiKey)
+                BrowseAdapter.UpdateList(response.genres as MutableList<MovieGenresItem?>?)
+                GenreListProvider.GenreList=response.genres
+                BrowseBinding.moviesGenreRv.adapter=BrowseAdapter
+                GenreListProvider.whichAdapter=1
+            }catch (e:Exception){
+                val progressDialog: ProgressDialog
+                progressDialog= ProgressDialog(requireContext())
+                progressDialog.setMessage("failed ${e.localizedMessage}")
+                Log.e("Failure","Failed ${e.localizedMessage}")
+                progressDialog.show()
+            }
+        }
+//        ApiManager.getServices().getMoviesGenre(Constants.apiKey)
+//            .enqueue(object :Callback<MoviesCategoriesResponse>{
+//                override fun onResponse(
+//                    call: Call<MoviesCategoriesResponse>,
+//                    response: Response<MoviesCategoriesResponse>
+//                ) {
+//                    BrowseAdapter.UpdateList(response.body()?.genres as MutableList<MovieGenresItem?>?)
+//                    GenreListProvider.GenreList=response.body()?.genres
+//                    BrowseBinding.moviesGenreRv.adapter=BrowseAdapter
+//                    GenreListProvider.whichAdapter=1
+//                }
+//
+//                override fun onFailure(call: Call<MoviesCategoriesResponse>, t: Throwable) {
+//                    val progressDialog: ProgressDialog
+//                    progressDialog= ProgressDialog(requireContext())
+//                    progressDialog.setMessage("failed ${t.localizedMessage}")
+//                    Log.e("Failure","Failed ${t.localizedMessage}")
+//                    progressDialog.show()
+//                }
+//
+//            })
     }
 
 

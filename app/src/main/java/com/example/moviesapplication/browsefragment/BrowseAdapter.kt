@@ -10,7 +10,13 @@ import com.example.moviesapplication.module.MovieGenresItem
 
 class BrowseAdapter(var GenreList:MutableList<MovieGenresItem?>?) :Adapter<BrowseAdapter.BrowseMovieViewHolder>(){
     var onGenreClickListener:OnGenreClickListener?=null
-    class BrowseMovieViewHolder(val singleGenreDesign:SinglecategoryDesignBinding):ViewHolder(singleGenreDesign.root)
+
+    class BrowseMovieViewHolder(val singleGenreDesign:SinglecategoryDesignBinding):ViewHolder(singleGenreDesign.root){
+        fun bind(Moviegenre:MovieGenresItem){
+            singleGenreDesign.vm=Moviegenre
+            singleGenreDesign.executePendingBindings()
+        }
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BrowseMovieViewHolder {
         val singleGenreDesignBinding=SinglecategoryDesignBinding.inflate(LayoutInflater.from(parent.context),parent,false)
@@ -19,7 +25,8 @@ class BrowseAdapter(var GenreList:MutableList<MovieGenresItem?>?) :Adapter<Brows
 
     override fun onBindViewHolder(holder: BrowseMovieViewHolder, position: Int) {
         val currentItem=GenreList?.get(position)
-        holder.singleGenreDesign.movieGenre.text=currentItem?.name
+        //holder.singleGenreDesign.movieGenre.text=currentItem?.name
+        holder.bind(currentItem!!)
         holder.singleGenreDesign.movieGenre.setOnClickListener({
             onGenreClickListener?.OnGenreClick(currentItem!!,position)
         })

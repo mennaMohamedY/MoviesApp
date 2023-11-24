@@ -26,12 +26,6 @@ class MainActivity : AppCompatActivity() {
         browseFragment= BrowseFragment()
        // searchFragment=SearchFragment()
 
-//        browseFragment?.onClickonTheClickListener=object :BrowseFragment.OnClickonTheClickListener{
-//            override fun OnClickonClick(genre: MovieGenresItem, position: Int) {
-//                pushFragment(SearchFragment.getInstance(genre))
-//            }
-//
-//        }
 
         mainViewModel=ViewModelProvider(this).get(MainViewModel::class.java)
         mainBinding.bottomNavigationView.selectedItemId = R.id.Home

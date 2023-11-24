@@ -1,7 +1,9 @@
 package com.example.moviesapplication.watchlist
 
+import android.app.ProgressDialog
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -14,6 +16,7 @@ import com.example.moviesapplication.databinding.FragmentWatchListBinding
 import com.example.moviesapplication.module.MovieGenresItem
 import com.example.moviesapplication.module.ResultsItem
 import com.example.moviesapplication.moviedetails.MovieDetailsActivity
+import com.example.moviesapplication.moviedetails.MoviesDetailsNavigator
 import com.example.moviesapplication.roomdb.RoomClass
 import com.example.moviesapplication.roomdb.WatchList
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +25,7 @@ import kotlinx.coroutines.launch
 import java.util.*
 
 
-class WatchListFragment : Fragment() {
+class WatchListFragment : Fragment(),MoviesDetailsNavigator {
     lateinit var WatchlistBinding:FragmentWatchListBinding
     lateinit var WatchListVM:WatchListViewModel
     var watchlistadapter=WatchListAdapter(mutableListOf())
@@ -39,22 +42,11 @@ class WatchListFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
-        //return inflater.inflate(R.layout.fragment_watch_list, container, false)
+
         WatchlistBinding=DataBindingUtil.inflate(inflater,R.layout.fragment_watch_list,container,false)
         return WatchlistBinding.root
         WatchlistBinding.moviesGenreRv.adapter=watchlistadapter
-
-
-
-
     }
-//    fun SubScribeToLiveData(){
-//        WatchListVM.movieslivedata.observe(viewLifecycleOwner){
-//            watchlistadapter.updateList(it)
-//        }
-//       // WatchListVM.movieslivedata.value=WatchListProvider.watchlist
-//    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -87,7 +79,7 @@ class WatchListFragment : Fragment() {
             }
         }
     }
-//
+
     override fun onStart() {
         super.onStart()
         SubScribeToLiveData()
@@ -95,12 +87,12 @@ class WatchListFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-       SubScribeToLiveData()
+        SubScribeToLiveData()
     }
     fun SubScribeToLiveData(){
         //WatchListVM.getWatchListMoviesFromDB(requireContext())
         WatchListVM.movieslivedata.observe(viewLifecycleOwner){
-           // watchlistadapter.updateList(null)
+            // watchlistadapter.updateList(null)
             //watchlistadapter.updateList(it)
             if (it.isNullOrEmpty()){
                 WatchlistBinding.empty.visibility=View.VISIBLE
@@ -120,13 +112,29 @@ class WatchListFragment : Fragment() {
             //watchlistadapter.notifyDataSetChanged()
         }
     }
+
+
+//    fun SubScribeToLiveData(){
+//        WatchListVM.movieslivedata.observe(viewLifecycleOwner){
+//            watchlistadapter.updateList(it)
+//            WatchlistBinding.empty.visibility=View.INVISIBLE
+//
+//
+//            if (it.isNullOrEmpty()){
+//                WatchlistBinding.empty.visibility=View.VISIBLE
+//                WatchlistBinding.moviesGenreRv.adapter=watchlistadapter
+//            }
+//            else{
+//                WatchlistBinding.empty.visibility=View.INVISIBLE
+//                WatchlistBinding.moviesGenreRv.adapter=watchlistadapter
+//            }
+//        }
+//    }
     fun DeleteFromWatchList(poster:WatchList){
         GlobalScope.launch(Dispatchers.IO) {
              RoomClass.getInstance(requireContext()).MovieDAO().deleteItemFromFav(poster)
         }
         WatchListVM.getWatchListMoviesFromDB(requireContext())
-
-        //updateMovieslist()
         SubScribeToLiveData()
     }
 
@@ -148,20 +156,16 @@ class WatchListFragment : Fragment() {
 
     }
 
-
-    fun updateMovieslist(){
-        GlobalScope.launch(Dispatchers.IO) {
-             WatchListProvider.watchlist = RoomClass.getInstance(requireContext()).MovieDAO().showAllFromFavourits()
-        }
-
-//        watchlistadapter.updateList(WatchListProvider.watchlist)
-//        WatchlistBinding.moviesGenreRv.adapter=watchlistadapter
-//        WatchlistBinding.empty.visibility=View.INVISIBLE
-
-
+    override fun showProgressDialog(msg: String) {
+        val progressDialog: ProgressDialog
+        progressDialog= ProgressDialog(requireContext())
+        progressDialog.setMessage("failed ${msg}")
+        Log.e("Failure","Failed ${msg}")
+        progressDialog.show()
     }
 
-
-
+    override fun onPlayVideoClick() {
+        TODO("Not yet implemented")
+    }
 
 }

@@ -10,15 +10,20 @@ import com.example.moviesapplication.R
 import com.example.moviesapplication.databinding.SinglervmovieDesignBinding
 import com.example.moviesapplication.module.ResultsItem
 
-class OnSelectedGenreAdapter(var MoviesData:MutableList<ResultsItem?>?) :Adapter<OnSelectedGenreAdapter.MyMoviesHolder>(){
+class OnSelectedGenreAdapter(var MoviesData:List<ResultsItem?>?) :Adapter<OnSelectedGenreAdapter.MyMoviesHolder>(){
     var onMovieClickListener:OnMovieClickListener?=null
     var onAddMovieClickListener:OnAddMovieClickListener?=null
 
-    fun updateData(moviesDAta: MutableList<ResultsItem?>?){
+    fun updateData(moviesDAta: List<ResultsItem?>?){
         MoviesData=moviesDAta
         notifyDataSetChanged()
     }
-    class MyMoviesHolder(val itemBinding :SinglervmovieDesignBinding):ViewHolder(itemBinding.root)
+    class MyMoviesHolder(val itemBinding :SinglervmovieDesignBinding):ViewHolder(itemBinding.root){
+        fun bind(movieData:ResultsItem){
+            itemBinding.vm=movieData
+            itemBinding.executePendingBindings()
+        }
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyMoviesHolder {
         val itemBinding=SinglervmovieDesignBinding.inflate(LayoutInflater.from(parent.context),parent,false)
@@ -27,14 +32,15 @@ class OnSelectedGenreAdapter(var MoviesData:MutableList<ResultsItem?>?) :Adapter
 
     override fun onBindViewHolder(holder: MyMoviesHolder, position: Int) {
         val currentItem=MoviesData?.get(position)
+        holder.bind(currentItem!!)
         //holder.itemBinding.movieImg.setImageResource(R.drawable.m2)
         // https://img.freepik.com/free-photo/painting-mountain-lake-with-mountain-background_188544-9126.jpg
         //"https://api.themoviedb.org/t/p/w500"+currentItem?.posterPath
         //https://image.tmdb.org/t/p/original/bOGkgRGdhrBYJSLpXaxhXVstddV.jpg
         Glide.with(holder.itemView).load("https://image.tmdb.org/t/p/original/" + currentItem?.posterPath).into(holder.itemBinding.movieImg)
-        holder.itemBinding.rate.text=currentItem?.voteAverage.toString()
-        holder.itemBinding.movieName.text = currentItem?.title
-        holder.itemBinding.movieLength.text= currentItem?.releaseDate
+//        holder.itemBinding.rate.text=currentItem?.voteAverage.toString()
+//        holder.itemBinding.movieName.text = currentItem?.title
+//        holder.itemBinding.movieLength.text= currentItem?.releaseDate
         holder.itemBinding.movieImg.setOnClickListener({
             onMovieClickListener?.OnMovieClicked(currentItem!!,position)
         })

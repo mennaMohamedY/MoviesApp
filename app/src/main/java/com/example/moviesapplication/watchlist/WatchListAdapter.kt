@@ -20,7 +20,7 @@ class WatchListAdapter (var watchlistDAta:List<WatchList?>?):Adapter<WatchListAd
     class MyWatchListHolder(val watchListBinding:SinglewatchlistDesignBinding):ViewHolder(watchListBinding.root){
         fun bind(watchlistElement:WatchList){
             watchListBinding.watchList=watchlistElement
-            watchListBinding.invalidateAll()
+            watchListBinding.executePendingBindings()
         }
     }
 
@@ -35,13 +35,7 @@ class WatchListAdapter (var watchlistDAta:List<WatchList?>?):Adapter<WatchListAd
 
 
         Glide.with(holder.itemView).load("https://image.tmdb.org/t/p/original/" + currentItem?.posterPath).into(holder.watchListBinding.movieImg)
-//        with(holder){
-//            with(watchListBinding){
-//                name.text=currentItem?.title
-//                year.text=currentItem?.releaseDate
-//                movieDescription.text=currentItem?.overview
-//            }
-//        }
+
         holder.watchListBinding.movieImg.setOnClickListener({
             onPosterClickListener?.OnPosterClick(currentItem!!,position)
         })

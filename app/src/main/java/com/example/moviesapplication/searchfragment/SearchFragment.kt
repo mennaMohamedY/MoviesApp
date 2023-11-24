@@ -22,13 +22,14 @@ import com.example.moviesapplication.module.MovieGenresItem
 import com.example.moviesapplication.module.ResultsItem
 import com.example.moviesapplication.module.TMDBResponse
 import com.example.moviesapplication.moviedetails.MovieDetailsActivity
+import com.example.moviesapplication.moviedetails.MoviesDetailsNavigator
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.util.*
 
 
-class SearchFragment : Fragment() {
+class SearchFragment : Fragment(),MoviesDetailsNavigator {
     lateinit var searchBinding:FragmentSearchBinding
     lateinit var searchVM:SearchViewModel
     var searchAdapter=OnSelectedGenreAdapter(mutableListOf())
@@ -44,8 +45,6 @@ class SearchFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
-        //return inflater.inflate(R.layout.fragment_search, container, false)
         searchBinding=DataBindingUtil.inflate(inflater,R.layout.fragment_search,container,false)
         return searchBinding.root
 
@@ -53,11 +52,11 @@ class SearchFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        getMoviesByID(1)
+        searchVM.nav=this
+        searchVM.getMoviesByID(1)
         pagesadapter.onPageNumClickListener= object :PagesAdapter.OnPageNumClickListener{
             override fun OnPageNumClick(position: Int) {
-                getMoviesByID(position)
+                searchVM.getMoviesByID(position)
             }
         }
         searchBinding.search.setOnQueryTextListener(object:androidx.appcompat.widget.SearchView.OnQueryTextListener{
@@ -75,6 +74,21 @@ class SearchFragment : Fragment() {
                 val intent= Intent(requireContext(),MovieDetailsActivity.getInstance(movie)::class.java)
                 startActivity(intent)
             }
+
+        }
+
+        searchBinding.moviesGenreRv.adapter=searchAdapter
+        searchBinding.pagesRV.adapter=pagesadapter
+
+        subscribeToLiveData()
+
+    }
+    fun subscribeToLiveData(){
+        searchVM.moviesDAta.observe(viewLifecycleOwner){
+            searchAdapter.updateData(it)
+        }
+        searchVM.pagesNum.observe(viewLifecycleOwner){
+            pagesadapter.updateNum(it)
 
         }
     }
@@ -97,66 +111,17 @@ class SearchFragment : Fragment() {
         }
     }
 
-
-    fun getMoviesByID(pageNum:Int){
-        var numm:Int
-        if (pageNum==0){
-            numm =1
-        }else{
-            numm = pageNum
-        }
-        lifecycleScope.launchWhenCreated {
-            try {
-                val response=ApiManager.getServices().getPopularMovies(Constants.apiKey,numm)
-                searchAdapter.updateData(response.results as MutableList<ResultsItem?>?)
-               // searchAdapter.updateData(response.body()?.results as MutableList<ResultsItem?>?)
-                searchBinding.moviesGenreRv.adapter=searchAdapter
-                val num=response.totalPages
-                //val num=response.body()?.totalPages
-                PagesNumProvider.pagesNum=num
-                pagesadapter.updateNum(PagesNumProvider.pagesNum)
-                searchBinding.pagesRV.adapter=pagesadapter
-                PagesNumProvider.moviesList=response.results
-                //PagesNumProvider.moviesList=response.body()?.results
-
-            }catch (e:Exception){
-                val progressDialog: ProgressDialog
-                progressDialog= ProgressDialog(requireContext())
-                progressDialog.setMessage("failed ${e.localizedMessage}")
-                Log.e("Failure","Failed ${e.localizedMessage}")
-                progressDialog.show()
-
-            }
-        }
-
-//        ApiManager.getServices().getPopularMovies(Constants.apiKey,numm)
-//            .enqueue(object :Callback<TMDBResponse>{
-//                override fun onResponse(
-//                    call: Call<TMDBResponse>,
-//                    response: Response<TMDBResponse>
-//                ) {
-//                    searchAdapter.updateData(response.body()?.results as MutableList<ResultsItem?>?)
-//                    searchBinding.moviesGenreRv.adapter=searchAdapter
-//                    val num=response.body()?.totalPages
-//                    PagesNumProvider.pagesNum=num
-//                    pagesadapter.updateNum(PagesNumProvider.pagesNum)
-//                    searchBinding.pagesRV.adapter=pagesadapter
-//                    PagesNumProvider.moviesList=response.body()?.results
-//
-//                }
-//
-//                override fun onFailure(call: Call<TMDBResponse>, t: Throwable) {
-//                    val progressDialog: ProgressDialog
-//                    progressDialog= ProgressDialog(requireContext())
-//                    progressDialog.setMessage("failed ${t.localizedMessage}")
-//                    Log.e("Failure","Failed ${t.localizedMessage}")
-//                    progressDialog.show()
-//                }
-//
-//            })
-
+    override fun showProgressDialog(msg: String) {
+        val progressDialog:ProgressDialog
+        progressDialog=ProgressDialog(requireContext())
+        progressDialog.setMessage("failed ${msg}")
+        Log.e("Failure","Failed ${msg}")
+        progressDialog.show()
     }
 
+    override fun onPlayVideoClick() {
+        TODO("Not yet implemented")
+    }
 
 
 }

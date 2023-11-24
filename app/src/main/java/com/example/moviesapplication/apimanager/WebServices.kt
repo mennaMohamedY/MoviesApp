@@ -20,10 +20,10 @@ interface WebServices {
     fun TopRatedMovies(@Query("api_key") apiKeyAuthentication: String):Call<TMDBResponse>
 
     @GET("movie/{id}")
-    fun getMovieDetails(@Path("id") id:Int , @Query("append_to_response") appendvideos:String, @Query("api_key") apiKeyAuthentication: String):Call<SingleMovieResponse>
+    suspend fun getMovieDetails(@Path("id") id:Int , @Query("append_to_response") appendvideos:String, @Query("api_key") apiKeyAuthentication: String):SingleMovieResponse
 
     @GET("movie/{movie_id}/similar")
-    fun getSimilarMovies(@Path("movie_id") movie_id:Int, @Query("api_key") apiKeyAuthentication: String):Call<TMDBResponse>
+    suspend fun getSimilarMovies(@Path("movie_id") movie_id:Int, @Query("api_key") apiKeyAuthentication: String):TMDBResponse
 
     @GET("genre/movie/list")
     suspend fun getMoviesGenre(@Query("api_key") apiKeyAuthentication: String):MoviesCategoriesResponse

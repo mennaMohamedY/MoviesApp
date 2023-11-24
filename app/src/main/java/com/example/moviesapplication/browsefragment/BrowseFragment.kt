@@ -32,26 +32,22 @@ import retrofit2.Response
 import java.util.*
 
 
-class BrowseFragment : Fragment() {
+class BrowseFragment : Fragment() ,BrowseNavigator{
     lateinit var BrowseBinding:FragmentBrowseBinding
     lateinit var BrowseVM:BrowseViewModel
     var BrowseAdapter=BrowseAdapter(mutableListOf())
-    //var onClickonTheClickListener:OnClickonTheClickListener?=null
     var scdBrowseAdapter=MoviesAdapter(listOf())
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         BrowseVM=ViewModelProvider(this).get(BrowseViewModel::class.java)
-
     }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
-        //return inflater.inflate(R.layout.fragment_browse, container, false)
         BrowseBinding=DataBindingUtil.inflate(inflater,R.layout.fragment_browse,container,false)
         return BrowseBinding.root
     }
@@ -59,7 +55,12 @@ class BrowseFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         //call api and bind movie genre adapter
-        getMoviesGenre()
+        BrowseVM.navigator=this
+        //getMoviesGenre()
+        BrowseBinding.moviesGenreRv.adapter=BrowseAdapter
+        BrowseVM.getMoviesGenre(requireContext())
+        subscribeToLiveData()
+
 
         BrowseBinding.search.setOnQueryTextListener(object:androidx.appcompat.widget.SearchView.OnQueryTextListener{
             override fun onQueryTextSubmit(query: String?): Boolean {
@@ -77,7 +78,9 @@ class BrowseFragment : Fragment() {
                 //onClickonTheClickListener?.OnClickonClick(genre,position)
                 Toast.makeText(requireContext(),"Click Happened",Toast.LENGTH_LONG).show()
                 Log.e("click","Click Happened")
-                getMoviesByID(genre)
+                //getMoviesByID(genre)
+                BrowseBinding.moviesGenreRv.adapter=scdBrowseAdapter
+                BrowseVM.getMoviesByID(genre)
             }
         }
 
@@ -86,58 +89,19 @@ class BrowseFragment : Fragment() {
                 val intent=Intent(requireContext(),MovieDetailsActivity.getInstance(movie)::class.java)
                 startActivity(intent)
             }
-
         }
 
     }
-//    interface OnClickonTheClickListener{
-//        fun OnClickonClick(genre:MovieGenresItem,position:Int)
-//    }
 
-    fun getMoviesByID(genre:MovieGenresItem){
-        lifecycleScope.launchWhenCreated {
-            try {
-                val response= ApiManager.getServices().getMoviesByGenreID(Constants.apiKey, genre.id!!)
-                scdBrowseAdapter.updateData(response.results)
-                BrowseBinding.moviesGenreRv.adapter=scdBrowseAdapter
-                GenreListProvider.whichAdapter=2
-                GenreListProvider.SelectedGenreMovies=response.results
-            }catch (e:Exception){
-                val progressDialog: ProgressDialog
-                progressDialog= ProgressDialog(requireContext())
-                progressDialog.setMessage("failed ${e.localizedMessage}")
-                Log.e("Failure","Failed ${e.localizedMessage}")
-                progressDialog.show()
-            }
+    fun subscribeToLiveData(){
+        BrowseVM.Movies.observe(viewLifecycleOwner){
+            BrowseAdapter.UpdateList(it)
         }
-//        ApiManager.getServices().getMoviesByGenreID(Constants.apiKey, genre.id!!)
-//            .enqueue(object :Callback<TMDBResponse>{
-//                override fun onResponse(
-//                    call: Call<TMDBResponse>,
-//                    response: Response<TMDBResponse>
-//                ) {
-//                    scdBrowseAdapter.updateData(response.body()?.results)
-//                    BrowseBinding.moviesGenreRv.adapter=scdBrowseAdapter
-//                    GenreListProvider.whichAdapter=2
-//                    GenreListProvider.SelectedGenreMovies=response.body()?.results
-//                }
-//
-//                override fun onFailure(call: Call<TMDBResponse>, t: Throwable) {
-//                    val progressDialog: ProgressDialog
-//                    progressDialog= ProgressDialog(requireContext())
-//                    progressDialog.setMessage("failed ${t.localizedMessage}")
-//                    Log.e("Failure","Failed ${t.localizedMessage}")
-//                    progressDialog.show()
-//                }
-//
-//            })
-
+        BrowseVM.Movies2.observe(viewLifecycleOwner){
+            scdBrowseAdapter.updateData(it)
+        }
     }
 
-
-    fun pushFragment(fragment:Fragment){
-
-    }
     fun filterList(Query:String){
         if (Query !=null){
             //incase you are searching the movies genre
@@ -178,45 +142,13 @@ class BrowseFragment : Fragment() {
     }
 
 
-    fun getMoviesGenre(){
-        lifecycleScope.launchWhenCreated {
-            try {
-                val response=ApiManager.getServices().getMoviesGenre(Constants.apiKey)
-                BrowseAdapter.UpdateList(response.genres as MutableList<MovieGenresItem?>?)
-                GenreListProvider.GenreList=response.genres
-                BrowseBinding.moviesGenreRv.adapter=BrowseAdapter
-                GenreListProvider.whichAdapter=1
-            }catch (e:Exception){
-                val progressDialog: ProgressDialog
-                progressDialog= ProgressDialog(requireContext())
-                progressDialog.setMessage("failed ${e.localizedMessage}")
-                Log.e("Failure","Failed ${e.localizedMessage}")
-                progressDialog.show()
-            }
-        }
-//        ApiManager.getServices().getMoviesGenre(Constants.apiKey)
-//            .enqueue(object :Callback<MoviesCategoriesResponse>{
-//                override fun onResponse(
-//                    call: Call<MoviesCategoriesResponse>,
-//                    response: Response<MoviesCategoriesResponse>
-//                ) {
-//                    BrowseAdapter.UpdateList(response.body()?.genres as MutableList<MovieGenresItem?>?)
-//                    GenreListProvider.GenreList=response.body()?.genres
-//                    BrowseBinding.moviesGenreRv.adapter=BrowseAdapter
-//                    GenreListProvider.whichAdapter=1
-//                }
-//
-//                override fun onFailure(call: Call<MoviesCategoriesResponse>, t: Throwable) {
-//                    val progressDialog: ProgressDialog
-//                    progressDialog= ProgressDialog(requireContext())
-//                    progressDialog.setMessage("failed ${t.localizedMessage}")
-//                    Log.e("Failure","Failed ${t.localizedMessage}")
-//                    progressDialog.show()
-//                }
-//
-//            })
+    override fun showProgressDialog(msg: String) {
+        val progressDialog: ProgressDialog
+        progressDialog= ProgressDialog(context)
+        progressDialog.setMessage("failed ${msg}")
+        Log.e("Failure","Failed ${msg}")
+        progressDialog.show()
     }
-
 
 
 }
